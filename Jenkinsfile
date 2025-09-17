@@ -1,22 +1,28 @@
 pipeline {
     agent any
-
+    environment {
+        IMAGE_NAME = 'nikhil0612/test_flask'
+    }
     stages {
-        stage('Build') {
+        stage('Checkout') {
             steps {
-                echo 'Hello World'
+                git 'https://github.com/CATEPX/Jenkins'
             }
         }
 
-        stage('Testing') {
+        stage('Build Docker Image') {
             steps {
-                echo 'Running tests'
+                bat "docker build -t ${IMAGE_NAME}:latest ."
             }
         }
 
-        stage('Deploy') {
+        stage('Push to DockerHub') {
             steps {
-                echo 'Deployed'
+                withCredentials([usernamePassword(credentialsId: '16d5b5c0-2ca7-4e95-8ec3-6b399ee11c7e', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    bat "docker login -u %DOCKER_USER% -p %DOCKER_PASS%"
+                    bat "docker push ${IMAGE_NAME}:latest"
+                    bat "docker logout"
+                }
             }
         }
     }
